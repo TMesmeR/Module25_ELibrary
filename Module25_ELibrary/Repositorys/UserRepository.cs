@@ -1,4 +1,6 @@
-﻿using Module25_ELibrary.PreparForTable;
+﻿using Microsoft.EntityFrameworkCore;
+using Module25_ELibrary.AppContext;
+using Module25_ELibrary.PreparForTable;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +11,12 @@ namespace Module25_ELibrary.Repositorys
 {
     internal class UserRepository
     {
-        private List<Users> _users = new List <Users>();
+        private readonly MyAppContext _context;
+
+        public UserRepository(MyAppContext context)
+        {
+            _context = context;
+        }
 
         /// <summary>
         /// Ищет объект юзера по id
@@ -18,15 +25,15 @@ namespace Module25_ELibrary.Repositorys
         /// <returns>Возвращает одного юзера в виде объекта Users</returns>
         public Users GetUserById (int id)
         {
-            return _users.FirstOrDefault(u => u.Id == id);
+            return _context.Users.FirstOrDefault(u => u.Id == id);
         }
         /// <summary>
         /// Получите всех юзеров из таблицы
         /// </summary>
         /// <returns>Возвращает List<Users></returns>
-        public List<Users> GEtAllUsers()
+        public List<Users> GetAllUsers()
         {
-            return _users;
+            return _context.Users.ToList();
         }
        /// <summary>
        /// Добавление нового юзера в бд
@@ -34,7 +41,8 @@ namespace Module25_ELibrary.Repositorys
        /// <param name="user"></param>
         public void AddUser (Users user)
         {
-            _users.Add(user);
+            _context.Users.Add(user);
+            _context.SaveChanges();
         }
         /// <summary>
         /// Удаление юзера по id
@@ -43,8 +51,9 @@ namespace Module25_ELibrary.Repositorys
         public void RemoveUser (int id)
         {
             var user = GetUserById (id);
-            if (user != null) 
-                _users.Remove(user);
+            if (user != null)
+                _context.Users.Remove(user);
+                _context.SaveChanges ();
         }
         /// <summary>
         /// Обновление имени юзверя по id
@@ -57,6 +66,7 @@ namespace Module25_ELibrary.Repositorys
             if (user != null)
             {
                 user.Name = newName;
+                _context.SaveChanges();
             }
         }
 
@@ -67,7 +77,9 @@ namespace Module25_ELibrary.Repositorys
         /// <returns></returns>
         public int GetCountBooksOnHands(int id)
         {
-            var user = _users.FirstOrDefault(u => u.Id == id);
+            var user = _context.Users
+                .Include(u => u.Books)
+                .FirstOrDefault(u => u.Id == id);
             return user?.Books?.Count ?? 0;
         }
     }
